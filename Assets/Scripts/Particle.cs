@@ -24,8 +24,8 @@ public class Particle : MonoBehaviour {
 	public Vector3 nextPos;
 
 	// pressure 
-
 	private float pressure;
+
 	// force due to pressure
 	[SerializeField]
 	private Vector3 fpr;
@@ -42,9 +42,11 @@ public class Particle : MonoBehaviour {
 	protected float density;
 
 	// array of all particles
-	public GameObject[] particles;
+	//public GameObject[] particles;
+
 	// array of all neighbours
 	public List<GameObject> neighbours;
+
 
 	[Range(1,4)]
 	[SerializeField]
@@ -110,7 +112,8 @@ public class Particle : MonoBehaviour {
 	Vector3 repulsiveOffset = Vector3.zero;
 
 	// collision offset
-	public Vector3 collisionOffset = Vector3.zero;
+	//private Vector3 collisionOffset = Vector3.zero;
+	//private Vector3 collisionPoint = Vector3.zero;
 
 	void Start ()
 	{
@@ -126,25 +129,29 @@ public class Particle : MonoBehaviour {
 		acc = Vector3.zero;
 		pressure = 0;
 		density = 0;
+		//collisionPoint = Vector3.zero;
+		//collisionOffset = Vector3.zero;
 	}
 
 	void FixedUpdate () 
 	{
 		elapsedTime = Time.deltaTime;
 		elapsedTime += extraTime;
-		particles = god.particles;
+		//particles = god.particles;
 		numchunks = (int) Mathf.Floor(elapsedTime / timestep);
 		extraTime = elapsedTime - timestep * numchunks;
 		List<Particle> lParts = new List<Particle>();
+		spatialHash ();
+		lParts = NeighbourParticles (gridPos);
 
 		for (int i = 0; i < numchunks; i++) 
 		{
 			density = 0;
 			fvis = fpr = Vector3.zero;
 			// calc grid co-ords
-			spatialHash ();
 
-			lParts = NeighbourParticles (gridPos);
+
+
 
 			// calc density and repulsion/attraction
 			foreach (var part in lParts) 
@@ -179,8 +186,8 @@ public class Particle : MonoBehaviour {
 
 			vel = transform.position - lastPos;
 			//Damping the Velocity
-			vel *= 0.99f;
-			nextPos = transform.position + vel + 0.5f * acc * tssq;// - repulsiveOffset * 0.9f;
+			vel *= 0.98f;
+			nextPos = transform.position + vel + acc * tssq;// - repulsiveOffset * 0.9f;
 			lastPos = transform.position;
 			transform.position = nextPos;
 			acc = Vector3.zero;
@@ -200,12 +207,11 @@ public class Particle : MonoBehaviour {
 		{
 				Vector3 diff = part.transform.position - transform.position;
 				float md2 = minDist * minDist;
-				float mD2 = maxDist * maxDist;
+				//float mD2 = maxDist * maxDist;
 				float dot = diff.sqrMagnitude;
 				if (dot < md2) 
-				{	//transform.position -= diff * 4 * (md2 - dot);
+				{	
 					repulsiveOffset += 0.5f * diff.normalized * (md2 - dot);
-					
 				}
 				/*else if (dot < mD2)
 				{
@@ -220,10 +226,14 @@ public class Particle : MonoBehaviour {
 
 
 	// to handle collisions (runs after onCollisionXXX)
-	/*void LateUpdate()
+	/*
+	void LateUpdate()
 	{
 		//Debug.DrawRay (transform.position, collisionOffset * 10f, Color.red, 2f);
-		transform.position += collisionOffset;
+
+		if (contacts > 0) 
+			transform.position = collisionPoint + collisionOffset / (float)contacts;
+
 		//lastPos = transform.position;
 		collisionOffset = Vector3.zero;
 	}*/
@@ -305,28 +315,22 @@ public class Particle : MonoBehaviour {
 
 	void OnCollisionEnter(Collision coll)
 	{
+		
 		if (!coll.gameObject.GetComponent<Particle> ()) 
 		{
-			transform.position += 0.15f * coll.contacts [0].normal.normalized;
-			//Debug.DrawRay (coll.contacts[0].point, coll.contacts [0].normal * 10, Color.green, 2f);
-			/*vel = 0.0000001f * (coll.contacts[0].point - lastPos);
-			vel -= 2 * (Vector3.Dot (vel, coll.contacts [0].normal)) * coll.contacts [0].normal;
-			collisionOffset += 0.0000001f * vel;*/
+			transform.position = coll.contacts [0].point + 0.525f* coll.contacts[0].normal.normalized;
 		}
+			
 	}
-
-	/*void OnCollisionStay(Collision coll)
+		
+	void OnCollisionStay(Collision coll)
 	{
 		
 		if (!coll.gameObject.GetComponent<Particle> ()) 
 		{
-			transform.position += 0.01f * coll.contacts [0].normal.normalized;
-			//Debug.DrawRay (coll.contacts[0].point, coll.contacts [0].normal * 10, Color.green, 2f);
-			vel = transform.position - lastPos;
-			vel = vel - 2 * (Vector3.Dot (vel, coll.contacts [0].normal)) * coll.contacts [0].normal.normalized;
-			collisionOffset += vel;
+			transform.position = coll.contacts [0].point + 0.525f* coll.contacts[0].normal.normalized;
 		}
-	}*/
+	}
 
 	public void AddForce(Vector3 force)
 	{

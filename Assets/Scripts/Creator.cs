@@ -60,7 +60,7 @@ public class Creator : MonoBehaviour {
 				{
 					GameObject go = Instantiate (particlePrefab, new Vector3 (i, j, k), Quaternion.identity, partParent.transform);
 					particles [index(a,b,c)] = go;
-					go.GetComponent<Particle> ().particles = particles;
+					//go.GetComponent<Particle> ().particles = particles;
 
 				}
 			}
